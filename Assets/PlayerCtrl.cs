@@ -37,6 +37,8 @@ public class PlayerCtrl : MonoBehaviour
         _userWt = transform.GetComponent<BoxCollider2D>().bounds.size.x / 2;
         _userHt = transform.GetComponent<BoxCollider2D>().bounds.size.y / 2;
         highscore = PlayerPrefs.GetInt(Save_Score);
+        PlayerPrefs.SetInt("PlayerScore", 0);
+        PlayerPrefs.Save();
     }
 
     void Update()
@@ -140,12 +142,13 @@ public class PlayerCtrl : MonoBehaviour
     public void PlayerDied ()
     {
         UnityEngine.Debug.Log("You have Died. T^T");
+        PlayerPrefs.SetInt("PlayerScore", score);
         if (score > highscore)
         {
             highscore = score;
             PlayerPrefs.SetInt(Save_Score, highscore);
-            PlayerPrefs.Save();
         }
+        PlayerPrefs.Save();
         SceneManager.LoadScene(0);
     }
 
