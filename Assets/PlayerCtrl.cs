@@ -16,18 +16,34 @@ public class PlayerCtrl : MonoBehaviour
     bool Right = false;
     public GameObject EnemyPref;
     public Transform SpawnPt;
-    private float timer = 4;
+    private float timer = 0;
+    private bool enemyKilled = false;
     public TextMeshProUGUI scoretext;
+    public TextMeshProUGUI highScore;
+    private const string Save_Score = "Score";
+    public int score, highscore;
+
+    private Vector2 boundary;
+    private float _userWt;
+    private float _userHt;
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         jumpsRemaining = maxJumps;
+        highScore.text = "Highest Score: " + PlayerPrefs.GetInt(Save_Score);
+        highscore = PlayerPrefs.GetInt(Save_Score);
+
+        boundary = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, Camera.main.transform.position.z));
+        _userWt = transform.GetComponent<BoxCollider2D>().bounds.size.x / 2;
+        _userHt = transform.GetComponent<BoxCollider2D>().bounds.size.y / 2;
+        highscore = PlayerPrefs.GetInt(Save_Score);
     }
 
     void Update()
     {
         float horizontal = Input.GetAxisRaw("Horizontal");
-
+        timer += Time.deltaTime;
+        UnityEngine.Debug.Log("timer =" + timer);
         // Move player horizontally
 
         rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
@@ -40,6 +56,33 @@ public class PlayerCtrl : MonoBehaviour
             jumpsRemaining--;
         }
 
+        if (timer > 2 && enemyKilled == true)
+        {
+            enemyKilled = false;
+            SpawnEnemy();
+            UnityEngine.Debug.Log("Enemy Spawned.");
+        }
+
+        //Boundary death
+        Vector3 CurrentPos = transform.position;
+
+        if ((CurrentPos.x
+            - _userWt) < (boundary.x * -1))
+            CurrentPos.x = (boundary.x * -1) + _userWt;
+
+        if ((CurrentPos.x + _userWt) > boundary.x)
+            CurrentPos.x = boundary.x - _userWt;
+
+        if ((CurrentPos.y + _userHt) > boundary.y)
+            CurrentPos.y = boundary.y - _userHt;
+
+        transform.position = CurrentPos;
+
+        if ((CurrentPos.y - _userHt) < (boundary.y * -1))
+        {
+            PlayerDied();
+        }
+
         //Switching Avatar Direction
         if (horizontal < 0 && Right == false)
             Flip();
@@ -47,9 +90,6 @@ public class PlayerCtrl : MonoBehaviour
             Flip();
 
     }
-
-    private const string Save_Score = "Score";
-    private int score;
     public void OnCollisionEnter2D(Collision2D Hit)
     {
 
@@ -68,24 +108,20 @@ public class PlayerCtrl : MonoBehaviour
             {
                 UnityEngine.Debug.Log("Enemy killed.");
                 score += 1;
-                PlayerPrefs.SetInt(Save_Score, score);
                 Destroy(Hit.gameObject);
+                timer = 0;
                 scoretext.text = "Score: " + score;
-                timer += Time.deltaTime;
-                if (timer > 3)
-                SpawnEnemy();
+                enemyKilled = true;
             }
             else
             {
-                UnityEngine.Debug.Log("You have Died. T^T");
-                SceneManager.LoadScene(0);
+                PlayerDied();
             }
         }
 
         if (Hit.gameObject.tag == "Bullet")
         {
-            UnityEngine.Debug.Log("You have Died. T^T");
-            SceneManager.LoadScene(0);
+            PlayerDied();
         }
 
     }
@@ -100,4 +136,17 @@ public class PlayerCtrl : MonoBehaviour
     {
         Instantiate(EnemyPref, SpawnPt.position, Quaternion.identity);
     }
+
+    public void PlayerDied ()
+    {
+        UnityEngine.Debug.Log("You have Died. T^T");
+        if (score > highscore)
+        {
+            highscore = score;
+            PlayerPrefs.SetInt(Save_Score, highscore);
+            PlayerPrefs.Save();
+        }
+        SceneManager.LoadScene(0);
+    }
+
 }
