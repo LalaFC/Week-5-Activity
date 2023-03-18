@@ -21,9 +21,6 @@ public class EnemyMec : MonoBehaviour
     private bool _isRight;
     public Transform Detector;
 
-    public Transform Spawn;
-
-
     // Start is called before the first frame update
     void Start()
     {
@@ -34,13 +31,13 @@ public class EnemyMec : MonoBehaviour
     void Update()
     {
         timer += Time.deltaTime;
-
         Vector2 Movement = Vector2.right * speed * Time.deltaTime;
         transform.Translate(Movement);
 
+
         RaycastHit2D groundCheck = Physics2D.Raycast(Detector.position, Vector2.down, GroundDist);
 
-        if (groundCheck.collider == false) 
+        if (groundCheck.collider == false)
         {
             if (_isRight)
             {
@@ -58,7 +55,7 @@ public class EnemyMec : MonoBehaviour
         LazerBeam();
     }
 
-    void shoot() 
+    void shoot()
     {
         Instantiate(bullet, bulletPos.position, Quaternion.identity);
         timer = 0;
@@ -66,17 +63,19 @@ public class EnemyMec : MonoBehaviour
 
     }
 
-    
+
 
     public void LazerBeam()
     {
-  
+
         UnityEngine.Debug.DrawRay(Detector.position, (Direction * EnemyRange), Color.red, 1f);
         var rays = Physics2D.RaycastAll(Detector.position, Direction, EnemyRange);
+
         foreach (var ray in rays)
         {
             if (ray.collider == null)
                 continue;
+
             if (ray.collider.gameObject.CompareTag("Player") && (timer > 3))
             {
                 if (timer > 3)
@@ -87,34 +86,6 @@ public class EnemyMec : MonoBehaviour
             }
         }
 
-    }
-
-    public void OnCollisionEnter2D(Collision Hit)
-    {
-        if (Hit.gameObject.tag == "Player")
-        {
-            Vector3 hit = Hit.contacts[0].normal;
-
-            float angle = Vector3.Angle(hit, Vector3.down);
-
-            if (Mathf.Approximately(angle, 180))
-            {
-                UnityEngine.Debug.Log("Enemy killed.");
-                Destroy(Hit.gameObject);
-                Invoke("Respawn", 5);
-            }
-            else
-            {
-                UnityEngine.Debug.Log("You have Died. T^T");
-                SceneManager.LoadScene(0);
-            }
-        }
-    }
-    void Respawn()
-    {
-        GameObject eclone = Instantiate(bullet, bulletPos.position, Quaternion.identity);
-        timer = 0;
-        eclone.transform.position = Spawn.position;
     }
 
 }
